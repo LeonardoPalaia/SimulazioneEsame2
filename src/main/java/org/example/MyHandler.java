@@ -86,7 +86,7 @@ public class MyHandler implements HttpHandler {
         allWines.addAll(whiteWines);
         StringBuilder response = new StringBuilder();
         for (Wine wine : allWines) {
-            response.append(wine.getName()).append("\n");
+            response.append(String.format("%-20s - €%.1f\n", wine.getName(), wine.getPrice()));
         }
         return response.toString();
     }
@@ -105,7 +105,7 @@ public class MyHandler implements HttpHandler {
     private String getWineList(List<Wine> wineList) {
         StringBuilder response = new StringBuilder();
         for (Wine wine : wineList) {
-            response.append(wine.getName()).append("\n");
+            response.append(String.format("%-20s - €%.1f\n", wine.getName(), wine.getPrice()));
         }
         return response.toString();
     }
@@ -129,7 +129,7 @@ public class MyHandler implements HttpHandler {
         Collections.sort(allWines, Comparator.comparing(Wine::getPrice));
         StringBuilder response = new StringBuilder();
         for (Wine wine : allWines) {
-            response.append(wine.getName()).append(" - €").append(wine.getPrice()).append("\n");
+            response.append(String.format("%-20s - €%.1f\n", wine.getName(), wine.getPrice()));
         }
         return response.toString();
     }
