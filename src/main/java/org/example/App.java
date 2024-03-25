@@ -7,7 +7,7 @@ import java.net.InetSocketAddress;
 
 public class App
 {
-    public static void main( String[] args )
+    public static void main( String[] args ) throws IOException
     {
         HttpServer server;
         try {
@@ -16,6 +16,7 @@ public class App
             server.setExecutor(null);
             server.start();
             System.out.println("Server started!");
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(0)));
         } catch (IOException e) {
             System.err.println("Errore durante l'avvio del server: " + e.getMessage());
             e.printStackTrace();

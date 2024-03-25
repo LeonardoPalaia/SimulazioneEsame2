@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpHandler;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,7 +13,6 @@ import java.util.List;
 
 public class MyHandler implements HttpHandler {
 
-    // Lista di esempio dei vini
     private List<Wine> redWines;
     private List<Wine> whiteWines;
 
@@ -30,63 +30,76 @@ public class MyHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-
-        InputStream is = exchange.getRequestBody();
-
         URI uri = exchange.getRequestURI();
         System.out.println(uri);
 
-        String method = exchange.getRequestMethod();
-        System.out.println(method);
+        String command = exchange.getRequestURI().getQuery();
+        if (command != null) {
+            String[] params = command.split("=");
+            if (params.length == 2 && params[0].equals("command")) {
+                String s = params[1];
 
-        String s = read(is);
+                System.out.println(s);
 
-        System.out.println(s);
-
-        String response;
-        try {
-            switch (s) {
-                case "red":
-                    response = getWineList(redWines);
-                    break;
-                case "white":
-                    response = getWineList(whiteWines);
-                    break;
-                case "stored_by_name":
-                    response = getSortedWineListByName();
-                    break;
-                case "stored_by_price":
-                    response = getSortedWineListByPrice();
-                    break;
-                default:
-                    response = "Invalid command";
-                    break;
+                String response;
+                try {
+                    switch (s) {
+                        case "red":
+                            response = getWineList(redWines);
+                            break;
+                        case "white":
+                            response = getWineList(whiteWines);
+                            break;
+                        case "sorted_by_name":
+                            response = getSortedWineListByName();
+                            break;
+                        case "sorted_by_price":
+                            response = getSortedWineListByPrice();
+                            break;
+                        case "all":
+                            response = getAllWineList();
+                            break;
+                        default:
+                            response = "Invalid command";
+                            break;
+                    }
+                } catch (Exception e) {
+                    response = "Error processing request: " + e.getMessage();
+                    e.printStackTrace();
+                }
+                extracted(exchange, 200, response);
             }
-        } catch (Exception e) {
-            response = "Error processing request: " + e.getMessage();
-            e.printStackTrace();
+            else {
+                String response = "Invalid command format";
+                extracted(exchange, 400, response);
+            }
         }
+        else {
+            String response = "Missing 'command' parameter";
+            extracted(exchange, 400, response);
+        }
+    }
 
+    private String getAllWineList() {
+        List<Wine> allWines = new ArrayList<>();
+        allWines.addAll(redWines);
+        allWines.addAll(whiteWines);
+        StringBuilder response = new StringBuilder();
+        for (Wine wine : allWines) {
+            response.append(wine.getName()).append("\n");
+        }
+        return response.toString();
+    }
+
+    private static void extracted(HttpExchange exchange, int rCode, String response) {
         try {
-            exchange.sendResponseHeaders(200, response.length());
+            exchange.sendResponseHeaders(rCode, response.getBytes(StandardCharsets.UTF_8).length);
             OutputStream os = exchange.getResponseBody();
-            os.write(response.getBytes());
+            os.write(response.getBytes(StandardCharsets.UTF_8));
             os.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private String read(InputStream is) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(is));
-        System.out.println("\n");
-        StringBuilder received = new StringBuilder();
-        String line;
-        while ((line = br.readLine()) != null) {
-            System.out.println(line);
-            received.append(line);
-        }
-        return received.toString();
     }
 
     private String getWineList(List<Wine> wineList) {
